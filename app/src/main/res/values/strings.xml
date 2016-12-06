@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">RssWidget</string>
+
+    <string name="activity_settings_label">Settings</string>
+    <string name="activity_settings_et_rss_link_placeholder">Rss link</string>
+    <string name="activity_settings_btn_save">Save</string>
+
+    <string name="widget_rss_label">Rss widget</string>
+    <string name="widget_rss_tv_gt">&gt;</string>
+    <string name="widget_rss_tv_lt">&lt;</string>
+
+    <string name="error_empty_field_rss_link">Please, type rss link</string>
+</resources>

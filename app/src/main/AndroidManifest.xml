@@ -1,0 +1,41 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.edkornev.rsswidget">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme"
+        android:name=".BaseApplication">
+
+        <activity android:name=".ui.settings.activities.SettingsActivity"
+            android:label="@string/activity_settings_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service android:name=".ui.rss.services.UpdateService"/>
+
+        <receiver
+            android:name=".ui.rss.providers.RssWidgetProvider"
+            android:icon="@android:drawable/star_big_on"
+            android:label="@string/widget_rss_label">
+            <intent-filter>
+                <action
+                    android:name="android.appwidget.action.APPWIDGET_UPDATE">
+                </action>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_rss_metadata">
+            </meta-data>
+        </receiver>
+
+    </application>
+
+</manifest>
