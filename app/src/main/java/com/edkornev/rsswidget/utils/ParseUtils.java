@@ -58,6 +58,7 @@ public class ParseUtils {
     private static EntryRssLink readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
         String title = null;
         String link = null;
+        String description = null;
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
@@ -67,11 +68,13 @@ public class ParseUtils {
                 title = readText(parser);
             } else if (name.equals("link")) {
                 link = readText(parser);
+            } else if (name.equals("description")) {
+                 description = readText(parser);
             } else {
                 skip(parser);
             }
         }
-        return new EntryRssLink(title, link);
+        return new EntryRssLink(title, link, description);
     }
 
     private static String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
@@ -102,12 +105,26 @@ public class ParseUtils {
     }
 
     public static class EntryRssLink {
-        public final String title;
-        public final String link;
+        private final String title;
+        private final String description;
+        private final String link;
 
-        private EntryRssLink(String title, String link) {
+        private EntryRssLink(String title, String link, String description) {
             this.title = title;
             this.link = link;
+            this.description = description;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getLink() {
+            return link;
         }
     }
 }

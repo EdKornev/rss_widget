@@ -1,10 +1,12 @@
 package com.edkornev.rsswidget.ui.rss.services;
 
 import android.app.IntentService;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.util.Log;
 import android.util.Xml;
 
+import com.edkornev.rsswidget.ui.rss.providers.RssWidgetProvider;
 import com.edkornev.rsswidget.utils.ParseUtils;
 import com.edkornev.rsswidget.utils.PostsUtils;
 import com.edkornev.rsswidget.utils.PreferenceUtils;
@@ -25,12 +27,18 @@ public class UpdateService extends IntentService {
 
     private static final String TAG = UpdateService.class.getSimpleName();
 
+    private int[] mAppWidgetIds;
+
     public UpdateService() {
         super(TAG);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "Start service");
+
+        mAppWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+
         loadRss();
     }
 
@@ -71,6 +79,14 @@ public class UpdateService extends IntentService {
 
             List<ParseUtils.EntryRssLink> posts = ParseUtils.readFeed(parser);
             PostsUtils.getInstance().setPosts(posts);
+
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
+
+            if (mAppWidgetIds != null) {
+                for (int id : mAppWidgetIds) {
+                    RssWidgetProvider.updateWidget(getApplicationContext(), appWidgetManager, id);
+                }
+            }
         } finally {
             in.close();
         }
