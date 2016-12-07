@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.edkornev.rsswidget.R;
@@ -83,15 +84,24 @@ public class RssWidgetProvider extends AppWidgetProvider {
     private void startService(Context context, int[] appWidgetIds) {
         Intent service = new Intent(context, UpdateService.class);
         service.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
+
+        boolean isAlarmRun = (PendingIntent.getService(context, 0, service, PendingIntent.FLAG_NO_CREATE) != null);
+
         PendingIntent pendingIntent = PendingIntent.getService(context, 0, service, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.add(Calendar.SECOND, 5);
         long frequency =  60 * 1000; // 1 minute
 
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        if (!isAlarmRun) {
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        } else {
+            alarmManager.cancel(pendingIntent);
+
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        }
     }
 
     public static void updateWidget(Context context, AppWidgetManager appWidgetManager, int widgetID) {
