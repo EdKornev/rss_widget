@@ -60,6 +60,8 @@ public class UpdateService extends IntentService {
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             urlConnection.setDoInput(true);
+            urlConnection.setConnectTimeout(25 * 1000); // 25 seconds
+            urlConnection.setReadTimeout(25 * 1000); // 25 seconds
 
             InputStream in = urlConnection.getInputStream();
 
