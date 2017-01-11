@@ -1,8 +1,12 @@
 package com.edkornev.rsswidget.ui.rss.services;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.util.Xml;
 
@@ -18,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +46,28 @@ public class UpdateService extends IntentService {
 
         for (String id : mAppWidgetIds) {
             loadRss(id);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent service = new Intent(this, UpdateService.class);
+
+            PendingIntent pendingIntent = PendingIntent.getService(this, 0, service, PendingIntent.FLAG_UPDATE_CURRENT);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.add(Calendar.MINUTE, 1);
+
+            // Более правильный вариант, но android позволит только раз 15 минут делать http запрос
+//            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+
+            // life hack который будет рабоать всегда, но "грязный" вариант, т.к. в таком случае doze mode просто не будет включаться
+            alarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(calendar.getTimeInMillis(), pendingIntent), pendingIntent);
         }
     }
 

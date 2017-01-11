@@ -6,7 +6,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import android.os.Build;
 import android.widget.RemoteViews;
 
 import com.edkornev.rsswidget.R;
@@ -15,7 +15,6 @@ import com.edkornev.rsswidget.utils.ParseUtils;
 import com.edkornev.rsswidget.utils.PostsUtils;
 import com.edkornev.rsswidget.utils.PreferenceUtils;
 
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
@@ -111,7 +110,7 @@ public class RssWidgetProvider extends AppWidgetProvider {
             appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                PostsUtils.getInstance().getprevPost(appWidgetId);
+                PostsUtils.getInstance().getPrevPost(appWidgetId);
                 updateWidget(context, AppWidgetManager.getInstance(context), appWidgetId);
             }
         }
@@ -131,11 +130,27 @@ public class RssWidgetProvider extends AppWidgetProvider {
         long frequency =  60 * 1000; // 1 minute
 
         if (!isAlarmRun) {
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Более правильный вариант, но android позволит только раз 15 минут делать http запрос
+//                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+
+                // life hack который будет работать всегда, но "грязный" вариант, т.к. в таком случае doze mode просто не будет включаться
+                alarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(calendar.getTimeInMillis(), pendingIntent), pendingIntent);
+            } else {
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+            }
         } else {
             alarmManager.cancel(pendingIntent);
 
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Более правильный вариант, но android позволит только раз 15 минут делать http запрос
+//                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+
+                // life hack который будет рабоать всегда, но "грязный" вариант, т.к. в таком случае doze mode просто не будет включаться
+                alarmManager.setAlarmClock(new AlarmManager.AlarmClockInfo(calendar.getTimeInMillis(), pendingIntent), pendingIntent);
+            } else {
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+            }
         }
     }
 

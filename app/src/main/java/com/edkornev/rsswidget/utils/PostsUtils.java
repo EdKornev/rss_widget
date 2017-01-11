@@ -57,7 +57,7 @@ public class PostsUtils {
         return model.mPosts.get(model.mCurrentPosition);
     }
 
-    public ParseUtils.EntryRssLink getprevPost(int widgetId) {
+    public ParseUtils.EntryRssLink getPrevPost(int widgetId) {
         WidgetModel model = mData.get(widgetId);
 
         if (model == null || model.mPosts.size() == 0) {
@@ -74,7 +74,11 @@ public class PostsUtils {
     }
 
     public void setPosts(int widgetId, List<ParseUtils.EntryRssLink> posts) {
-        WidgetModel model = new WidgetModel();
+        WidgetModel model = this.mData.get(widgetId);
+
+        if (model == null) {
+            model = new WidgetModel();
+        }
         model.mPosts = posts;
 
         this.mData.append(widgetId, model);
