@@ -16,7 +16,10 @@ import com.edkornev.rsswidget.utils.PreferenceUtils;
  */
 public class SettingsActivity extends Activity implements View.OnClickListener {
 
+    private static final String KEY_INTENT_FLAG = "isRssSaved";
+
     private EditText mETRSSLink;
+    private boolean mIsRssSaved = false;
 
     private int mWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
@@ -42,17 +45,13 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
         mETRSSLink.setText(savedRssLink);
 
         findViewById(R.id.btn_save).setOnClickListener(this);
-
-
     }
 
     @Override
     public void onDestroy() {
-        String rssLink = mETRSSLink.getText().toString().trim();
-
         super.onDestroy();
 
-        if (rssLink.isEmpty()) {
+        if (!mIsRssSaved) {
             if (mWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
                 Intent intent = new Intent();
                 intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mWidgetId);
@@ -61,6 +60,18 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
                 finish();
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        
+        outState.putBoolean(KEY_INTENT_FLAG, mIsRssSaved);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        mIsRssSaved = savedInstanceState.getBoolean(KEY_INTENT_FLAG, false);
     }
 
     @Override
@@ -81,6 +92,8 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
             Intent intent = new Intent();
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mWidgetId);
             setResult(RESULT_OK, intent);
+
+            mIsRssSaved = true;
 
             finish();
         }
