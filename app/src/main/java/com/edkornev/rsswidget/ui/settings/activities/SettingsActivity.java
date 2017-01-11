@@ -36,7 +36,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
             setResult(RESULT_CANCELED, intent);
         }
 
-        String savedRssLink = PreferenceUtils.getPref(this).getString(PreferenceUtils.KEY_SETTINGS_RSS_LINK, "");
+        String savedRssLink = PreferenceUtils.getPref(this).getString(String.valueOf(mWidgetId), "");
 
         mETRSSLink = (EditText) findViewById(R.id.et_rss_link);
         mETRSSLink.setText(savedRssLink);
@@ -47,16 +47,34 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
     }
 
     @Override
+    public void onDestroy() {
+        String rssLink = mETRSSLink.getText().toString().trim();
+
+        super.onDestroy();
+
+        if (rssLink.isEmpty()) {
+            if (mWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                Intent intent = new Intent();
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mWidgetId);
+                setResult(RESULT_CANCELED, intent);
+
+                finish();
+            }
+        }
+    }
+
+    @Override
     public void onClick(View view) {
         String rssLink = mETRSSLink.getText().toString().trim();
 
         if (rssLink.isEmpty()) {
             Toast.makeText(this, R.string.error_empty_field_rss_link, Toast.LENGTH_LONG).show();
+            return;
         }
 
         PreferenceUtils.getPref(this)
                 .edit()
-                .putString(PreferenceUtils.KEY_SETTINGS_RSS_LINK, rssLink)
+                .putString(String.valueOf(mWidgetId), rssLink)
                 .apply();
 
         if (mWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {

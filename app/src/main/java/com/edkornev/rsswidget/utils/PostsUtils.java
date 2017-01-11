@@ -1,5 +1,7 @@
 package com.edkornev.rsswidget.utils;
 
+import android.util.SparseArray;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,8 +12,7 @@ public class PostsUtils {
 
     private static PostsUtils mInstance;
 
-    private List<ParseUtils.EntryRssLink> mPosts = new ArrayList<>();
-    private int mCurrentPosition = 0;
+    private SparseArray<WidgetModel> mData = new SparseArray<>();
 
     private PostsUtils() {
     }
@@ -28,37 +29,63 @@ public class PostsUtils {
         return mInstance;
     }
 
-    public ParseUtils.EntryRssLink getCurrentPost() {
-        if (mPosts.size() == 0) {
+    public ParseUtils.EntryRssLink getCurrentPost(int widgetId) {
+        WidgetModel model = mData.get(widgetId);
+
+        if (model == null || model.mPosts.size() == 0) {
             return null;
-        } else if (mCurrentPosition >= mPosts.size()) {
-            mCurrentPosition = 0;
+        } else if (model.mCurrentPosition >= model.mPosts.size()) {
+            model.mCurrentPosition = 0;
         }
 
-        return mPosts.get(mCurrentPosition);
+        return model.mPosts.get(model.mCurrentPosition);
     }
 
-    public ParseUtils.EntryRssLink getNextPost() {
-        if (mPosts.size() == 0) {
+    public ParseUtils.EntryRssLink getNextPost(int widgetId) {
+        WidgetModel model = mData.get(widgetId);
+
+        if (model == null || model.mPosts.size() == 0) {
             return null;
-        } else if (++mCurrentPosition >= mPosts.size()) {
-            mCurrentPosition = 0;
         }
 
-        return mPosts.get(mCurrentPosition);
-    }
+        model.mCurrentPosition += 1;
 
-    public ParseUtils.EntryRssLink getprevPost() {
-        if (mPosts.size() == 0) {
-            return null;
-        } else if (--mCurrentPosition < 0) {
-            mCurrentPosition = mPosts.size() - 1;
+        if (model.mCurrentPosition >= model.mPosts.size()) {
+            model.mCurrentPosition = 0;
         }
 
-        return mPosts.get(mCurrentPosition);
+        return model.mPosts.get(model.mCurrentPosition);
     }
 
-    public void setPosts(List<ParseUtils.EntryRssLink> posts) {
-        this.mPosts = posts;
+    public ParseUtils.EntryRssLink getprevPost(int widgetId) {
+        WidgetModel model = mData.get(widgetId);
+
+        if (model == null || model.mPosts.size() == 0) {
+            return null;
+        }
+
+        model.mCurrentPosition -= 1;
+
+        if (model.mCurrentPosition < 0) {
+            model.mCurrentPosition = model.mPosts.size() - 1;
+        }
+
+        return model.mPosts.get(model.mCurrentPosition);
+    }
+
+    public void setPosts(int widgetId, List<ParseUtils.EntryRssLink> posts) {
+        WidgetModel model = new WidgetModel();
+        model.mPosts = posts;
+
+        this.mData.append(widgetId, model);
+    }
+
+    public void remove(int widgetId) {
+        this.mData.remove(widgetId);
+    }
+
+    private class WidgetModel {
+        private List<ParseUtils.EntryRssLink> mPosts = new ArrayList<>();
+        private int mCurrentPosition = 0;
     }
 }

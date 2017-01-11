@@ -11,6 +11,7 @@ public class PreferenceUtils {
     public static final String KEY_SETTINGS = "settings";
     public static final String KEY_SETTINGS_RSS_LINK = "settings_rss_link";
     public static final String KEY_SETTINGS_POSTS = "settings_posts";
+    public static final String KEY_SETTINGS_WIDGET_IDS = "settings_widget_ids";
 
     public static SharedPreferences getPref(Context context) {
         return context.getSharedPreferences(KEY_SETTINGS, Context.MODE_PRIVATE);

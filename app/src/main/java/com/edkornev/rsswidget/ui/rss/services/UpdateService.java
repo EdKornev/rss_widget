@@ -18,7 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by kornev on 05/12/16.
@@ -27,7 +30,7 @@ public class UpdateService extends IntentService {
 
     private static final String TAG = UpdateService.class.getSimpleName();
 
-    private int[] mAppWidgetIds;
+    private Set<String> mAppWidgetIds;
 
     public UpdateService() {
         super(TAG);
@@ -35,13 +38,15 @@ public class UpdateService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        mAppWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+        mAppWidgetIds = PreferenceUtils.getPref(this).getStringSet(PreferenceUtils.KEY_SETTINGS_WIDGET_IDS, new HashSet<String>());
 
-        loadRss();
+        for (String id : mAppWidgetIds) {
+            loadRss(id);
+        }
     }
 
-    private void loadRss() {
-        String rssLink = PreferenceUtils.getPref(getApplicationContext()).getString(PreferenceUtils.KEY_SETTINGS_RSS_LINK, "");
+    private void loadRss(String id) {
+        String rssLink = PreferenceUtils.getPref(getApplicationContext()).getString(id, "");
 
         if (rssLink.isEmpty()) {
             return;
@@ -58,7 +63,7 @@ public class UpdateService extends IntentService {
 
             InputStream in = urlConnection.getInputStream();
 
-            parse(in);
+            parse(id, in);
         } catch (Exception e) {
             Log.e(TAG, e.getMessage(), e);
         } finally {
@@ -68,7 +73,7 @@ public class UpdateService extends IntentService {
         }
     }
 
-    private void parse(InputStream in) throws XmlPullParserException, IOException {
+    private void parse(String id, InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -76,15 +81,11 @@ public class UpdateService extends IntentService {
             parser.nextTag();
 
             List<ParseUtils.EntryRssLink> posts = ParseUtils.readFeed(parser);
-            PostsUtils.getInstance().setPosts(posts);
+            PostsUtils.getInstance().setPosts(Integer.valueOf(id), posts);
 
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
 
-            if (mAppWidgetIds != null) {
-                for (int id : mAppWidgetIds) {
-                    RssWidgetProvider.updateWidget(getApplicationContext(), appWidgetManager, id);
-                }
-            }
+            RssWidgetProvider.updateWidget(getApplicationContext(), appWidgetManager, Integer.valueOf(id));
         } finally {
             in.close();
         }

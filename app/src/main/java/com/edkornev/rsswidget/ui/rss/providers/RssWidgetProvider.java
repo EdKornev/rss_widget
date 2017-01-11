@@ -13,8 +13,12 @@ import com.edkornev.rsswidget.R;
 import com.edkornev.rsswidget.ui.rss.services.UpdateService;
 import com.edkornev.rsswidget.utils.ParseUtils;
 import com.edkornev.rsswidget.utils.PostsUtils;
+import com.edkornev.rsswidget.utils.PreferenceUtils;
 
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by kornev on 05/12/16.
@@ -35,16 +39,48 @@ public class RssWidgetProvider extends AppWidgetProvider {
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         super.onUpdate(context, appWidgetManager, appWidgetIds);
 
-        startService(context, appWidgetIds);
+        Set<String> ids = new HashSet<>();
 
         for (int id : appWidgetIds) {
             updateWidget(context, appWidgetManager, id);
+
+            ids.add(String.valueOf(id));
         }
+
+        PreferenceUtils
+                .getPref(context)
+                .edit()
+                .putStringSet(PreferenceUtils.KEY_SETTINGS_WIDGET_IDS, ids)
+                .apply();
+
+        startService(context);
     }
 
     @Override
     public void onDeleted(Context context, int[] appWidgetIds) {
         super.onDeleted(context, appWidgetIds);
+
+        Set<String> ids = PreferenceUtils.getPref(context).getStringSet(PreferenceUtils.KEY_SETTINGS_WIDGET_IDS, new HashSet<String>());
+
+        for (int id : appWidgetIds) {
+            ids.remove(String.valueOf(id));
+
+            PreferenceUtils
+                    .getPref(context)
+                    .edit()
+                    .putString(String.valueOf(id), "")
+                    .apply();
+
+            PostsUtils.getInstance().remove(id);
+        }
+
+        PreferenceUtils
+                .getPref(context)
+                .edit()
+                .putStringSet(PreferenceUtils.KEY_SETTINGS_WIDGET_IDS, ids)
+                .apply();
+
+        startService(context);
     }
 
     @Override
@@ -68,22 +104,21 @@ public class RssWidgetProvider extends AppWidgetProvider {
             appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                PostsUtils.getInstance().getNextPost();
+                PostsUtils.getInstance().getNextPost(appWidgetId);
                 updateWidget(context, AppWidgetManager.getInstance(context), appWidgetId);
             }
         } else if (intent.getAction().equalsIgnoreCase(ACTION_PREV_POST)) {
             appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
 
             if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                PostsUtils.getInstance().getprevPost();
+                PostsUtils.getInstance().getprevPost(appWidgetId);
                 updateWidget(context, AppWidgetManager.getInstance(context), appWidgetId);
             }
         }
     }
 
-    private void startService(Context context, int[] appWidgetIds) {
+    private void startService(Context context) {
         Intent service = new Intent(context, UpdateService.class);
-        service.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
 
         boolean isAlarmRun = (PendingIntent.getService(context, 0, service, PendingIntent.FLAG_NO_CREATE) != null);
 
@@ -105,7 +140,7 @@ public class RssWidgetProvider extends AppWidgetProvider {
     }
 
     public static void updateWidget(Context context, AppWidgetManager appWidgetManager, int widgetID) {
-        ParseUtils.EntryRssLink rssItem = PostsUtils.getInstance().getCurrentPost();
+        ParseUtils.EntryRssLink rssItem = PostsUtils.getInstance().getCurrentPost(widgetID);
 
         if (rssItem == null) {
             return;
